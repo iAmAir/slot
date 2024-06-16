@@ -1,0 +1,4 @@
+/**
+ * Mixins
+ */
+export * from "./animationMixin";

@@ -1,0 +1,20 @@
+{
+	"name": "@slot/machine-item",
+	"exports": "./src/index.ts",
+	"description": "Элемент для слот-машины",
+	"author": "iAmAir (iamair@live.com)",
+	"contributors": [],
+	"homepage": "https://github.com/InfinityBoard/board",
+	"bugs": "https://github.com/InfinityBoard/board/issues",
+	"license": "CC BY-NC-ND",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/InfinityBoard/board.git"
+	},
+	"publishConfig": {
+		"access": "restricted"
+	},
+	"peerDependencies": {
+		"pixi.js": "^8.0.0"
+	}
+}

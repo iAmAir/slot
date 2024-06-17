@@ -1,7 +1,7 @@
 /**
  * Dependence
  */
-import { Application, Assets } from 'pixi.js';
+import { Application, Assets, Color, FillGradient, Text, TextStyle } from 'pixi.js';
 import { Machine } from '@slot/machine';
 
 /**
@@ -97,29 +97,88 @@ function onResize(app: Application, machine: Machine): void {
 	 * Create Slot Machine
 	 */
 	const machine = new Machine({
-		row: 3,
-		col: 3,
+		col: 7,
+		row: 8,
 		items,
 	}, {
-		itemWidth: 200,
-		itemHeight: 200,
+		itemWidth: 100,
+		itemHeight: 100,
 	});
-
-	machine.start();
-	setTimeout(async () => {
-		await machine.stop([
-			[items[7], items[1], items[2]],
-			[items[3], items[7], items[4]],
-			[items[5], items[6], items[7]]
-		]);
-
-		console.log("hello world!");
-	}, 4500);
 
 	/**
 	 * Insert Slot Machine
 	 */
 	app.stage.addChild(machine);
+
+	/**
+	 * Add TextStyle
+	 */
+	const fill = new FillGradient(0, 0, 0, 36 * 1.7);
+	const colors = [0xffffff, 0x00ff99].map((color) => Color.shared.setValue(color).toNumber());
+
+	colors.forEach((number, index) => {
+		const ratio = index / colors.length;
+
+		fill.addColorStop(ratio, number);
+	});
+
+	const style = new TextStyle({
+		fontFamily: 'Arial',
+		fontSize: 36,
+		fontStyle: 'italic',
+		fontWeight: 'bold',
+		fill: { fill },
+		stroke: { color: 0x4a1850, width: 5 },
+		dropShadow: {
+			color: 0x000000,
+			angle: Math.PI / 6,
+			blur: 4,
+			distance: 6,
+		},
+		wordWrap: true,
+		wordWrapWidth: 440,
+	});
+	const text = new Text({
+		text: "Play",
+		style,
+	});
+
+	/**
+	 * Set Parameters
+	 */
+	text.eventMode = "dynamic";
+	text.cursor = "pointer";
+
+	/**
+	 * Add event
+	 */
+	let started = false;
+
+	text.on("click", async () => {
+		if (!started) {
+			text.text = "Stop";
+			machine.start();
+		} else {
+			await machine.stop([
+				[items[0], items[0], items[1], items[3], items[3], items[1], items[4]],
+				[items[5], items[4], items[1], items[4], items[5], items[5], items[1]],
+				[items[5], items[0], items[3], items[3], items[3], items[0], items[0]],
+				[items[3], items[0], items[1], items[3], items[3], items[3], items[4]],
+				[items[4], items[1], items[3], items[3], items[0], items[0], items[4]],
+				[items[4], items[1], items[4], items[5], items[5], items[1], items[3]],
+				[items[5], items[5], items[5], items[4], items[3], items[1], items[1]],
+				[items[5], items[5], items[5], items[4], items[3], items[1], items[3]]
+			]);
+			text.text = "Play";
+		}
+
+		started = !started;
+	});
+
+	/**
+	 * Insert Play Text
+	 */
+	app.stage.addChild(text);
 
 	/**
 	 * Resize

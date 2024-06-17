@@ -2,12 +2,13 @@
  * Dependence
  */
 import { Machine } from "./Machine";
-import { animationTarget } from "./mixins";
+import { animationTarget, resultTarget } from "./mixins";
 
 /**
  * Init
  */
 Machine.mixin(animationTarget);
+Machine.mixin(resultTarget);
 
 /**
  * Utils

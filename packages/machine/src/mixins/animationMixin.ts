@@ -11,7 +11,6 @@ import { PixiPlugin } from "gsap/PixiPlugin";
  */
 import type { Machine, SlotItem } from "..";
 import type { MachineItem } from "@slot/machine-item";
-import { MotionBlurFilter } from "pixi-filters";
 
 /**
  * Init GSAP Plugin
@@ -35,12 +34,14 @@ export interface AnimationOptions {
 	/**
 	 * stop
 	 * @description функция выключает анимацию прокрутки
+	 * @param {SlotItem[][]} matrix - матрица элементов, которые нужно показать в конце
+	 * @returns {Promise<boolean>} - успешно ли
 	 */
-	stop(matrix: SlotItem[][]): void;
+	stop(matrix: SlotItem[][]): Promise<boolean>;
 }
 
 /**
- * Объект centerPoint прикрепляется к {@link Line}.
+ * Объект animation прикрепляется к {@link Machine}
  * @private
  */
 export interface AnimationTarget extends AnimationOptions {
@@ -54,17 +55,22 @@ export interface AnimationTarget extends AnimationOptions {
 	_animationColumn: gsap.core.Tween[];
 	/**
 	 * _onRepeatLoop
-	 * @param {MachineItem[]} targets - элементы колонки
-	 * @param {SlotItem[]} items - массив элементов слотов 
+	 * @param {gsap.core.Tween} animation - инстанс анимации
+	 * @param {SlotItem[]} items - массив из возможных элементов слотов 
 	 */
-	_onRepeatLoop(targets: MachineItem[], items: SlotItem[]): void;
+	_onRepeatLoop(animation: gsap.core.Tween, items: SlotItem[]): void;
 	/**
 	 * _onRepeatStop
 	 * @param {gsap.core.Tween} animation - текущая анимация
-	 * @param {MachineItem[]} targets - элементы колонки
-	 * @param {SlotItem[]} items - массив элементов слотов
+	 * @param {SlotItem[]} items - массив элементов слотов, которые нужно вставить
 	 */
-	_onRepeatStop(animation: gsap.core.Tween, targets: MachineItem[], items: SlotItem[]): void;
+	_onRepeatStop(animation: gsap.core.Tween, items: SlotItem[]): void;
+	/**
+	 * _onComplete
+	 * @param {gsap.core.Tween} animation - инстанс анимации
+	 * @param {SlotItem[]} items - массив из возможных элементов слотов 
+	 */
+	_onComplete(animation: gsap.core.Tween, items: SlotItem[]): void;
 }
 
 export const animationTarget: Partial<Machine> = {
@@ -78,33 +84,36 @@ export const animationTarget: Partial<Machine> = {
 		for (let i = 0; i < this.col; i++) {
 			const items = [];
 
-			for (let z = 0; z <= this.row; z++) {
-				const item = (z === this.row) ? this.tempRow[i] : this.matrix[z][i];
-
-				items.push(item);
+			for (let z = 0; z < this.row; z++) {
+				items.push(this.matrix[z][i]);
 			}
+
+			items.push(this.tempRow[i]);
 
 			const animation = gsap.to(items, {
 				y: (_index: number, item: MachineItem) => item.y - item.width,
 				duration: 0.20,
 				ease: "none",
-				repeat: -1,
-				onStart: () => {
-					this.filters = new MotionBlurFilter();
-				},
-				onRepeat: this._onRepeatLoop,
-				onRepeatParams: [items, this.items]
+				repeat: -1
 			});
+
+			animation.vars.onRepeat = this._onRepeatLoop;
+			animation.vars.onRepeatParams = [animation, this.items];
 
 			this._animationColumn.push(animation);
 		}
+
+		/** Отдаем событие */
+		this.emit("start");
 	},
 	/**
 	 * stop
 	 * @description функция выключает анимацию прокрутки
+	 * @param {SlotItem[][]} matrix - матрица элементов, которые нужно показать в конце
+	 * @returns {Promise<boolean>} - успешно ли
 	 */
-	stop(matrix: SlotItem[][]): Promise<boolean> | false {
-		return new Promise(async (resolve, reject) => {
+	stop(matrix: SlotItem[][]): Promise<boolean> {
+		return new Promise(async (resolve) => {
 			let isValid = true;
 
 			/** Если количество строк не соответствует - не валидно */
@@ -116,7 +125,7 @@ export const animationTarget: Partial<Machine> = {
 			}
 
 			/** Если не переданно - возвращаем */
-			if (!isValid) reject(false);
+			if (!isValid) return resolve(false);
 
 			/** Перебираем колонки */
 			for (let i = 0; i < this.col; i++) {
@@ -128,20 +137,24 @@ export const animationTarget: Partial<Machine> = {
 					items.push(row[i]);
 				}
 
-				/** Добавляем последний рандомный элемент во временную строку */
-				items.push(getRandomArray(this.items));
-
 				/** Переделываем onRepeat */
 				animation.vars.onRepeat = this._onRepeatStop;
-				animation.vars.onRepeatParams = [animation, animation.targets(), items];
-
-				/** Удаляем при завершении */
-				animation.then(() => PIXI.removeItems(this._animationColumn, i - 1, 1));
+				animation.vars.onRepeatParams = [animation, items];
+				animation.vars.onComplete = this._onComplete;
+				animation.vars.onCompleteParams = [animation, this.items];
 			}
 
+			/** Дожидаемся когда все анимации завершатся */
 			await Promise.all(this._animationColumn);
 
+			/** Удаляем их полностью */
+			PIXI.removeItems(this._animationColumn, 0, this._animationColumn.length);
+
+			/** Снимаем защиту */
 			this.protected = false;
+
+			/** Отдаем событие */
+			this.emit("stop");
 
 			return resolve(true);
 		});
@@ -156,10 +169,15 @@ export const animationTarget: Partial<Machine> = {
 	_animationColumn: [],
 	/**
 	 * _onRepeatLoop
-	 * @param {MachineItem[]} targets - элементы колонки
+	 * @param {gsap.core.Tween} animation - инстанс анимации
 	 * @param {SlotItem[]} items - массив элементов слотов 
 	 */
-	_onRepeatLoop(targets: MachineItem[], items: SlotItem[]): void {
+	_onRepeatLoop(animation: gsap.core.Tween, items: SlotItem[]): void {
+		const targets = animation.targets() as MachineItem[];
+		const lastIndex = targets.length - 1;
+		const lastTarget = targets[lastIndex];
+
+		/** Перебираем элементы, и делаем сдвиг */
 		for (let i = 1; i < targets.length; i++) {
 			const prevTarget = targets[i - 1];
 			const target = targets[i];
@@ -167,11 +185,11 @@ export const animationTarget: Partial<Machine> = {
 			prevTarget.style.texture = target.style.texture;
 			prevTarget.slotId = target.slotId;
 
-			if (i === targets.length - 1) {
+			if (lastIndex === i) {
 				const slotItem = getRandomArray(items);
 
-				target.slotId = slotItem.id;
-				target.style.texture = slotItem.texture;
+				lastTarget.slotId = slotItem.id;
+				lastTarget.style.texture = slotItem.texture;
 			}
 		}
 	},
@@ -181,7 +199,10 @@ export const animationTarget: Partial<Machine> = {
 	 * @param {MachineItem[]} targets - элементы колонки
 	 * @param {SlotItem[]} items - массив элементов слотов
 	 */
-	_onRepeatStop(animation: gsap.core.Tween, targets: MachineItem[], items: SlotItem[]): void {
+	_onRepeatStop(animation: gsap.core.Tween, items: SlotItem[]): void {
+		const targets = animation.targets() as MachineItem[];
+		const lastIndex = targets.length - 1;
+
 		for (let i = 1; i < targets.length; i++) {
 			const prevTarget = targets[i - 1];
 			const target = targets[i];
@@ -189,21 +210,46 @@ export const animationTarget: Partial<Machine> = {
 			prevTarget.style.texture = target.style.texture;
 			prevTarget.slotId = target.slotId;
 
-			if (i === targets.length - 1) {
+			if (lastIndex === i) {
+				const lastTargat = targets[lastIndex];
 				const slotItem = items[0];
 
-				target.slotId = slotItem.id;
-				target.style.texture = slotItem.texture;
+				lastTargat.slotId = slotItem.id;
+				lastTargat.style.texture = slotItem.texture;
 
-				/** Удаляем элемент */
 				PIXI.removeItems(items, 0, 1);
 			}
 		}
 
-		animation.vars.onRepeatParams = [animation, animation.targets(), items];
+		animation.vars.onRepeatParams = [animation, items];
 
-		if (items.length === 1) {
-			animation.repeat(0);
-		}
+		if (items.length === 0) animation.repeat(0);
 	},
+	_onComplete(animation: gsap.core.Tween, items: SlotItem[]): void {
+		/** Возвращаем сетку в исходное состояние */
+		animation.revert();
+
+		const targets = animation.targets() as MachineItem[];
+		const lastIndex = targets.length - 1;
+		const lastTarget = targets[lastIndex];
+
+		/** Перебираем элементы, и делаем сдвиг */
+		for (let i = 1; i < targets.length; i++) {
+			const prevTarget = targets[i - 1];
+			const target = targets[i];
+
+			prevTarget.style.texture = target.style.texture;
+			prevTarget.slotId = target.slotId;
+
+			if (lastIndex === i) {
+				const slotItem = getRandomArray(items);
+
+				lastTarget.slotId = slotItem.id;
+				lastTarget.style.texture = slotItem.texture;
+			}
+		}
+
+		/** Убиваем анимацию */
+		animation.kill();
+	}
 }

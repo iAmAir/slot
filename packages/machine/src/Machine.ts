@@ -85,6 +85,9 @@ export class Machine extends Container {
 		this.col = options.col;
 		this.row = options.row;
 
+		/** Включение плагинов */
+		this.result = true;
+
 		/** Добавляем маску */
 		this.addChild(this.mask);
 	}
@@ -176,7 +179,7 @@ export class Machine extends Container {
 
 		/** Добавляем строчки */
 		while (this._row < row) {
-			const row = [];
+			const rowArray = [];
 
 			for (let i = 0; i < this._col; i++) {
 				/** Берем рандомный элемент */
@@ -190,17 +193,17 @@ export class Machine extends Container {
 				/** Устанавливаем текущий row, col и slotId */
 				item.slotId = slotItem.id;
 				item.currentCol = i;
-				item.currentRow = row.length;
+				item.currentRow = this._row;
 
 				/** Добавляем элемент в контейнер */
 				this.addChild(item);
 
 				/** Добавляем элемент в строчку */
-				row.push(item);
+				rowArray.push(item);
 			}
 
 			/** Добавляем в матрицу */
-			this.matrix.push(row);
+			this.matrix.push(rowArray);
 
 			/** Обновляем счетчик row */
 			this._row++;
@@ -258,11 +261,8 @@ export class Machine extends Container {
 
 				/** Устанавливаем текущий row, col и slotId */
 				item.slotId = slotItem.id;
-
-				if (this._row === i) {
-					item.currentCol = this._col + 1;
-					item.currentRow = i;
-				}
+				item.currentCol = this._col + 1;
+				item.currentRow = (this._row === i) ? i : -1;
 
 				/** Добавляем элемент в контейнер */
 				this.addChild(item);

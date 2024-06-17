@@ -2,13 +2,20 @@
  * Dependence
  */
 import { Graphics } from "pixi.js";
+import { gsap } from "gsap/gsap-core";
 
 /**
  * Types
  */
 import type { Machine } from "..";
-import type { SlotItem } from "..";
 import type { MachineItem } from "@slot/machine-item";
+
+/** 
+ * Интерфейс описывающий объект с класстерами 
+ */
+export interface SlotClusters {
+	[id: string]: [number, number][][];
+}
 
 /**
  * Если `result` включен для объекта, добавляется функциональность отображения результата к Machine
@@ -20,7 +27,7 @@ export interface ResultOptions {
 	 * @params {MachineItem[][]} matrix - матрица элементов, которые нужно просчитать
 	 * @params {number} minCluster - минимальное кол. элементов для объединения в кластеры
 	 */
-	findClusters(matrix: MachineItem[][], minCluster: number): void;
+	findClusters(matrix: MachineItem[][], minCluster: number): SlotClusters;
 	/**
 	 * set result
 	 * @description триггер управления отображением результата
@@ -46,6 +53,11 @@ export interface ResultTarget extends ResultOptions {
 	 * @description инстанс результатов
 	 */
 	_resultInstance: Graphics;
+	/**
+	 * _resultAnimation
+	 * @description анимация результатов
+	 */
+	_resultAnimation: gsap.core.Tween;
 	/**
 	 * _result
 	 * @description приватный триггер управления отображением результатов
@@ -111,6 +123,7 @@ export const resultTarget: Partial<Machine> = {
 	_onStart(): void {
 		/** Если есть инстанс результатов - отчищаем его */
 		if (this._resultInstance) {
+			this._resultAnimation.kill();
 			this._resultInstance.clear();
 			this._resultInstance.removeFromParent();
 			this._resultInstance.destroy();
@@ -131,6 +144,12 @@ export const resultTarget: Partial<Machine> = {
 		 */
 		this._resultInstance = new Graphics();
 
+		/** 
+		 * Проставляем параметры 
+		 */
+		this._resultInstance.zIndex = -1;
+		this._resultInstance.alpha = 0;
+
 		/**
 		 * Вставляем элемент
 		 */
@@ -141,17 +160,32 @@ export const resultTarget: Partial<Machine> = {
 		 */
 		const keyClusters = this.findClusters(this.matrix, 3);
 
-		for (const [key, clusters] of Object.entries(keyClusters)) {
+		/** Отрисовываем кластеры */
+		for (const clusters of Object.values(keyClusters)) {
 			for (const cluster of clusters) {
 				for (const item of cluster) {
-					this._resultInstance.rect(item[0] * this.style.itemWidth, item[1] * this.style.itemHeight, this.style.itemWidth, this.style.itemHeight);
+					this._resultInstance.rect(
+						item[0] * this.style.itemWidth,
+						item[1] * this.style.itemHeight,
+						this.style.itemWidth,
+						this.style.itemHeight,
+					)
 				}
 			}
 		}
 
+		/** Раскрашиваем */
 		this._resultInstance.fill({
-			color: 0x000000,
+			color: 0xFF0000,
 			alpha: 0.5
+		});
+
+		/**
+		 * Добавляем анимацию
+		 */
+		this._resultAnimation = gsap.to(this._resultInstance, {
+			duration: 0.1,
+			alpha: 1,
 		});
 
 		/**
@@ -164,7 +198,7 @@ export const resultTarget: Partial<Machine> = {
 	 * @params {MachineItem[][]} matrix - матрица элементов, которые нужно просчитать
 	 * @params {number} minClusterSize - минимальное кол. элементов для объединения в кластеры
 	 */
-	findClusters(matrix: MachineItem[][], minClusterSize: number) {
+	findClusters(matrix: MachineItem[][], minClusterSize: number): SlotClusters {
 		const rows = matrix.length;
 		const cols = matrix[0].length;
 		const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
@@ -174,7 +208,7 @@ export const resultTarget: Partial<Machine> = {
 
 		const isValid = (y: number, x: number) => x >= 0 && y >= 0 && x < cols && y < rows;
 
-		function bfs(y: number, x: number, value: SlotItem) {
+		function bfs(y: number, x: number, value: MachineItem) {
 			const queue = [[y, x]];
 			const cluster = [];
 
@@ -202,7 +236,7 @@ export const resultTarget: Partial<Machine> = {
 			return cluster;
 		}
 
-		const clusters = {};
+		const clusters: SlotClusters = {};
 
 		for (let y = 0; y < rows; y++) {
 			for (let x = 0; x < cols; x++) {
@@ -214,7 +248,7 @@ export const resultTarget: Partial<Machine> = {
 						if (!clusters[value.slotId]) {
 							clusters[value.slotId] = [];
 						}
-						clusters[value.slotId].push(cluster);
+						clusters[value.slotId].push(cluster as [number, number][]);
 					}
 				}
 			}

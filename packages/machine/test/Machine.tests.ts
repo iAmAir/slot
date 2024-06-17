@@ -120,7 +120,7 @@ describe("Machine", () => {
 
 			machine.destroy();
 
-			expect(machine.mask).toBeUndefined();
+			expect(machine.mask).toBeNull();
 		});
 	});
 });

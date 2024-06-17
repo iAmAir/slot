@@ -81,7 +81,7 @@ export class Machine extends Container {
 		}, options);
 
 		/** Установка опций */
-		this.items = options.items;
+		this._items = options.items;
 		this.col = options.col;
 		this.row = options.row;
 
@@ -177,6 +177,8 @@ export class Machine extends Container {
 
 		if (this._row === row) return;
 
+		if (row < 1) throw new Error(`Machine: Min value for row - 1`);
+
 		/** Добавляем строчки */
 		while (this._row < row) {
 			const rowArray = [];
@@ -245,6 +247,8 @@ export class Machine extends Container {
 
 		if (this._col === col) return;
 
+		if (col < 1) throw new Error(`Machine: Min value for col - 1`);
+
 		/** Добавляем колонки */
 		while (this._col < col) {
 			for (let i = 0; i <= this._row; i++) {
@@ -305,11 +309,6 @@ export class Machine extends Container {
 	get items(): SlotItem[] {
 		return this._items;
 	}
-	set items(items: SlotItem[]) {
-		if (this.protected) throw new Error(`Machine: Machine is protected!`);
-
-		this._items = items;
-	}
 
 	/**
 	 * style
@@ -353,6 +352,13 @@ export class Machine extends Container {
 	 */
 	public destroy(options: DestroyOptions = false): void {
 		if (this.protected) throw new Error(`Machine: Machine is protected!`);
+
+		/** Выключение плагинов */
+		this.result = true;
+
+		/** Удаление маски */
+		this.mask.removeFromParent();
+		this.mask.destroy();
 
 		/** Отчистка стилей */
 		this._style.destroy();

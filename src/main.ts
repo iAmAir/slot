@@ -1,7 +1,7 @@
 /**
  * Dependence
  */
-import { Application, Color, FillGradient, Text, TextStyle } from 'pixi.js';
+import { Application, Text, TextStyle, Texture } from 'pixi.js';
 import { Assets } from "@pixi/assets";
 import { Machine } from '@slot/machine';
 
@@ -47,45 +47,40 @@ function onResize(app: Application, machine: Machine): void {
 	container.appendChild(app.view);
 
 	/**
-	 * Loading sprite
-	 */
-	const { frames: textures } = await Assets.load('/slot-texture.json');
-
-	/**
 	 * Create Machine Item
 	 */
 	const items = [
 		{
 			id: "0",
-			texture: textures["rt_object_01.png"]
+			texture: await Texture.fromURL("./rt_object_01.png")
 		},
 		{
 			id: "1",
-			texture: textures["rt_object_02.png"]
+			texture: await Texture.fromURL("./rt_object_02.png")
 		},
 		{
 			id: "2",
-			texture: textures["rt_object_03.png"]
+			texture: await Texture.fromURL("./rt_object_03.png")
 		},
 		{
 			id: "3",
-			texture: textures["rt_object_04.png"]
+			texture: await Texture.fromURL("./rt_object_04.png")
 		},
 		{
 			id: "4",
-			texture: textures["rt_object_05.png"]
+			texture: await Texture.fromURL("./rt_object_05.png")
 		},
 		{
 			id: "5",
-			texture: textures["rt_object_06.png"]
+			texture: await Texture.fromURL("./rt_object_06.png")
 		},
 		{
 			id: "6",
-			texture: textures["rt_object_07.png"]
+			texture: await Texture.fromURL("./rt_object_07.png")
 		},
 		{
 			id: "7",
-			texture: textures["rt_object_08.png"]
+			texture: await Texture.fromURL("./rt_object_08.png")
 		}
 	];
 

@@ -92,7 +92,7 @@ export const animationTarget: Partial<Machine> = {
 
 			const animation = gsap.to(items, {
 				y: (_index: number, item: MachineItem) => item.y - item.width,
-				duration: 0.20,
+				duration: 0.10,
 				ease: "none",
 				repeat: -1
 			});

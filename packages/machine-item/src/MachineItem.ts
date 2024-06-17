@@ -1,7 +1,7 @@
 /**
  * Dependence
  */
-import { Graphics } from "pixi.js";
+import { Graphics, Matrix } from "pixi.js";
 import { MachineItemStyle, MachineItemStyleOptions } from ".";
 
 /**
@@ -45,10 +45,11 @@ export class MachineItem extends Graphics {
 		/** Рисуем */
 		if (style.texture) {
 			this.beginTextureFill({
-				texture: style.texture
+				texture: style.texture,
+				matrix: new Matrix(style.width / style.texture.width, 0, 0, style.height / style.texture.height, 0, 0),
 			});
 			this.drawRect(0, 0, style.width, style.height);
-			// this.endFill();
+			this.endFill();
 		}
 	}
 

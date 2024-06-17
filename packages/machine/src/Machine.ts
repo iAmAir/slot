@@ -1,14 +1,14 @@
 /**
  * Dependence
  */
-import { Container, Graphics, removeItems, Texture } from "pixi.js";
+import { Container, Graphics, utils, Texture } from "pixi.js";
 import { MachineStyle, getRandomArray } from ".";
 import { MachineItem } from "@slot/machine-item";
 
 /**
  * Types
  */
-import type { DestroyOptions, Dict } from "pixi.js";
+import type { IDestroyOptions } from "pixi.js";
 import type { MachineStyleOptions } from ".";
 
 /**
@@ -33,8 +33,24 @@ export class Machine extends Container {
 	 * Смешивает все перечислимые свойства и методы из исходного объекта в контейнер.
 	 * @param source — источник свойств и методов, которые можно использовать.
 	 */
-	public static mixin(source: Dict<any>): void {
-		Object.defineProperties(Machine.prototype, Object.getOwnPropertyDescriptors(source));
+	public static mixin(source: utils.Dict<any>): void {
+		// in ES8/ES2017, this would be really easy:
+		// Object.defineProperties(DisplayObject.prototype, Object.getOwnPropertyDescriptors(source));
+
+		// get all the enumerable property keys
+		const keys = Object.keys(source);
+
+		// loop through properties
+		for (let i = 0; i < keys.length; ++i) {
+			const propertyName = keys[i];
+
+			// Set the property using the property descriptor - this works for accessors and normal value properties
+			Object.defineProperty(
+				Machine.prototype,
+				propertyName,
+				Object.getOwnPropertyDescriptor(source, propertyName)
+			);
+		}
 	}
 
 	/**
@@ -58,11 +74,11 @@ export class Machine extends Container {
 	/** Временная строка для реализации анимаций */
 	public readonly tempRow: MachineItem[] = [];
 
-	/** Устанавливает маску */
-	public mask: Graphics = new Graphics();
-
 	constructor(options?: MachineOptions, style?: Partial<MachineStyleOptions> | MachineStyle) {
 		super();
+
+		/** Установка маски */
+		this.mask = new Graphics();
 
 		/** Устанавливаем стили */
 		this._style = null;
@@ -146,13 +162,14 @@ export class Machine extends Container {
 		/** Отчищаем маску */
 		this.mask.clear();
 
-		/** Отрисовываем прямоугольник */
-		this.mask.rect(0, 0, this._col * style.itemWidth, this._row * style.itemHeight);
-
 		/** Включаем любой цвет */
-		this.mask.fill({
-			color: 0xffffff
-		});
+		this.mask.beginFill(0xffffff);
+
+		/** Отрисовываем прямоугольник */
+		this.mask.drawRect(0, 0, this._col * style.itemWidth, this._row * style.itemHeight);
+
+		/** Выключаем цвет */
+		this.mask.endFill();
 	}
 
 	/** 
@@ -220,12 +237,12 @@ export class Machine extends Container {
 			for (let i = 0; i < lastRow.length; i++) {
 				const item = lastRow[i];
 
-				item.removeFromParent();
+				this.removeChild(item);
 				item.destroy();
 			}
 
 			/** Удаляем строку из матрицы */
-			removeItems(this.matrix, lastIndex, 1);
+			utils.removeItems(this.matrix, lastIndex, 1);
 
 			/** Обновляем счетчик row */
 			this._row--;
@@ -287,11 +304,11 @@ export class Machine extends Container {
 				/** Удаляем элемент */
 				const lastElement = row[row.length - 1];
 
-				lastElement.removeFromParent();
+				this.removeChild(lastElement);
 				lastElement.destroy();
 
 				/** Удаляем элемент из массива */
-				removeItems(row, row.length - 1, 1);
+				utils.removeItems(row, row.length - 1, 1);
 			}
 
 			/** Обновляем счетчик col */
@@ -350,14 +367,14 @@ export class Machine extends Container {
 	 * @param {boolean} [options.context=false] - Используется только для children с graphicsContext. Например Graphics
 	 * Если для параметра options.children установлено значение true, контекст дочерней графики должен быть уничтожен.
 	 */
-	public destroy(options: DestroyOptions = false): void {
+	public destroy(options: IDestroyOptions | boolean = false): void {
 		if (this.protected) throw new Error(`Machine: Machine is protected!`);
 
 		/** Выключение плагинов */
 		this.result = true;
 
 		/** Удаление маски */
-		this.mask.removeFromParent();
+		this.removeChild(this.mask);
 		this.mask.destroy();
 
 		/** Отчистка стилей */

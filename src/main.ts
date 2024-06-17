@@ -1,7 +1,8 @@
 /**
  * Dependence
  */
-import { Application, Assets, Color, FillGradient, Text, TextStyle } from 'pixi.js';
+import { Application, Color, FillGradient, Text, TextStyle } from 'pixi.js';
+import { Assets } from "@pixi/assets";
 import { Machine } from '@slot/machine';
 
 /**
@@ -22,22 +23,17 @@ function onResize(app: Application, machine: Machine): void {
  */
 (async () => {
 	/**
-	 * Create Application
-	 */
-	const app = new Application();
-
-	/**
 	 * Get container
 	 */
 	const container = document.getElementById("app") as HTMLElement;
 
 	/**
-	 * Init Application
+	 * Create Application
 	 */
-	await app.init({
+	const app = new Application({
 		resizeTo: container,
 		resolution: window.devicePixelRatio || 1,
-		background: 0x000000
+		backgroundColor: 0x000000
 	});
 
 	/**
@@ -48,12 +44,12 @@ function onResize(app: Application, machine: Machine): void {
 	/**
 	 * Insert application
 	 */
-	container.appendChild(app.canvas);
+	container.appendChild(app.view);
 
 	/**
 	 * Loading sprite
 	 */
-	const { textures } = await Assets.load('/slot-texture.json');
+	const { frames: textures } = await Assets.load('/slot-texture.json');
 
 	/**
 	 * Create Machine Item
@@ -113,40 +109,21 @@ function onResize(app: Application, machine: Machine): void {
 	/**
 	 * Add TextStyle
 	 */
-	const fill = new FillGradient(0, 0, 0, 36 * 1.7);
-	const colors = [0xffffff, 0x00ff99].map((color) => Color.shared.setValue(color).toNumber());
-
-	colors.forEach((number, index) => {
-		const ratio = index / colors.length;
-
-		fill.addColorStop(ratio, number);
-	});
-
 	const style = new TextStyle({
 		fontFamily: 'Arial',
 		fontSize: 36,
 		fontStyle: 'italic',
 		fontWeight: 'bold',
-		fill: { fill },
-		stroke: { color: 0x4a1850, width: 5 },
-		dropShadow: {
-			color: 0x000000,
-			angle: Math.PI / 6,
-			blur: 4,
-			distance: 6,
-		},
+		fill: [0xFFFFFF, 0x00ff99],
 		wordWrap: true,
 		wordWrapWidth: 440,
 	});
-	const text = new Text({
-		text: "Play",
-		style,
-	});
+	const text = new Text("Play", style);
 
 	/**
 	 * Set Parameters
 	 */
-	text.eventMode = "dynamic";
+	text.interactive = true;
 	text.cursor = "pointer";
 
 	/**

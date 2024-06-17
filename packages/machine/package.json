@@ -15,7 +15,7 @@
 		"access": "restricted"
 	},
 	"peerDependencies": {
-		"pixi.js": "^8.1.5",
+		"pixi.js": "6.5.10",
 		"gsap": "^3.12.5",
 		"@slot/machine-item": "file:../machine-item"
 	}

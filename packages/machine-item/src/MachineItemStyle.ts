@@ -1,7 +1,7 @@
 /**
  * Dependence
  */
-import { EventEmitter, Texture } from "pixi.js";
+import { utils, Texture } from "pixi.js";
 
 /**
  * Types
@@ -29,9 +29,7 @@ export interface MachineItemStyleOptions {
 	texture: Texture | string | null;
 }
 
-export class MachineItemStyle extends EventEmitter<{
-	update: MachineItemStyle
-}> {
+export class MachineItemStyle extends utils.EventEmitter {
 	public static defaultStyle: MachineItemStyleOptions = {
 		width: 50,
 		height: 50,

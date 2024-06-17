@@ -148,7 +148,7 @@ export const animationTarget: Partial<Machine> = {
 			await Promise.all(this._animationColumn);
 
 			/** Удаляем их полностью */
-			PIXI.removeItems(this._animationColumn, 0, this._animationColumn.length);
+			PIXI.utils.removeItems(this._animationColumn, 0, this._animationColumn.length);
 
 			/** Снимаем защиту */
 			this.protected = false;
@@ -217,7 +217,7 @@ export const animationTarget: Partial<Machine> = {
 				lastTargat.slotId = slotItem.id;
 				lastTargat.style.texture = slotItem.texture;
 
-				PIXI.removeItems(items, 0, 1);
+				PIXI.utils.removeItems(items, 0, 1);
 			}
 		}
 

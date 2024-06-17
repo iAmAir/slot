@@ -123,7 +123,7 @@ export const resultTarget: Partial<Machine> = {
 				if (this._resultInstance && this._resultAnimation) {
 					this._resultAnimation.kill();
 					this._resultInstance.clear();
-					this._resultInstance.removeFromParent();
+					this._resultInstance.parent.removeChild(this._resultInstance);
 					this._resultInstance.destroy();
 				}
 			}
@@ -147,7 +147,7 @@ export const resultTarget: Partial<Machine> = {
 		if (this._resultInstance) {
 			this._resultAnimation.kill();
 			this._resultInstance.clear();
-			this._resultInstance.removeFromParent();
+			this._resultInstance.parent.removeChild(this._resultInstance);
 			this._resultInstance.destroy();
 		}
 
@@ -182,11 +182,14 @@ export const resultTarget: Partial<Machine> = {
 		 */
 		const keyClusters = this.findClusters(this.matrix, 3);
 
+		/** Раскрашиваем */
+		this._resultInstance.beginFill(0xFF0000, 0.5);
+
 		/** Отрисовываем кластеры */
 		for (const clusters of Object.values(keyClusters)) {
 			for (const cluster of clusters) {
 				for (const item of cluster) {
-					this._resultInstance.rect(
+					this._resultInstance.drawRect(
 						item[0] * this.style.itemWidth,
 						item[1] * this.style.itemHeight,
 						this.style.itemWidth,
@@ -196,11 +199,7 @@ export const resultTarget: Partial<Machine> = {
 			}
 		}
 
-		/** Раскрашиваем */
-		this._resultInstance.fill({
-			color: 0xFF0000,
-			alpha: 0.5
-		});
+		this._resultInstance.endFill();
 
 		/**
 		 * Добавляем анимацию

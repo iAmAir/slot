@@ -1,7 +1,7 @@
 /**
  * Dependence
  */
-import { EventEmitter } from "pixi.js";
+import { utils } from "pixi.js";
 
 export interface MachineStyleOptions {
 	/**
@@ -19,9 +19,7 @@ export interface MachineStyleOptions {
 	itemHeight: number;
 }
 
-export class MachineStyle extends EventEmitter<{
-	update: MachineStyle
-}> {
+export class MachineStyle extends utils.EventEmitter {
 	public static defaultStyle: MachineStyleOptions = {
 		itemWidth: 50,
 		itemHeight: 50

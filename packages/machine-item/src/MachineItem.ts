@@ -7,7 +7,7 @@ import { MachineItemStyle, MachineItemStyleOptions } from ".";
 /**
  * Types
  */
-import type { DestroyOptions } from "pixi.js";
+import type { IDestroyOptions } from "pixi.js";
 
 export class MachineItem extends Graphics {
 	public slotId: string;
@@ -44,7 +44,11 @@ export class MachineItem extends Graphics {
 
 		/** Рисуем */
 		if (style.texture) {
-			this.texture(style.texture, null, 0, 0, style.width, style.height);
+			this.beginTextureFill({
+				texture: style.texture
+			});
+			this.drawRect(0, 0, style.width, style.height);
+			// this.endFill();
 		}
 	}
 
@@ -122,7 +126,7 @@ export class MachineItem extends Graphics {
 	 * @param {boolean} [options.context=false] - Используется только для children с graphicsContext. Например Graphics
 	 * Если для параметра options.children установлено значение true, контекст дочерней графики должен быть уничтожен.
 	 */
-	public destroy(options: DestroyOptions = false): void {
+	public destroy(options: IDestroyOptions | boolean = false): void {
 		/** Отчистка стилей */
 		this._style.destroy();
 		this._style = null;

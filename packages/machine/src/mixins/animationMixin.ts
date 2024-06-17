@@ -4,7 +4,7 @@
 import * as PIXI from "pixi.js";
 import { getRandomArray } from "..";
 import { gsap } from "gsap";
-import { PixiPlugin } from "gsap/PixiPlugin";
+import { PixiPlugin } from "gsap/dist/PixiPlugin";
 
 /**
  * Types

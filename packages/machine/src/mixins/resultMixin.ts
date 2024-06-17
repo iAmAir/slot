@@ -1,14 +1,25 @@
 /**
  * Dependence
  */
-import { Graphics } from "pixi.js";
-import { gsap } from "gsap/gsap-core";
+import * as PIXI from "pixi.js";
+import { gsap } from "gsap";
+import { PixiPlugin } from "gsap/dist/PixiPlugin";
 
 /**
  * Types
  */
 import type { Machine } from "..";
 import type { MachineItem } from "@slot/machine-item";
+
+/**
+ * Init GSAP Plugin
+ */
+gsap.registerPlugin(PixiPlugin);
+
+/** 
+ * Register pixi
+ */
+PixiPlugin.registerPIXI(PIXI);
 
 /** 
  * Интерфейс описывающий объект с класстерами 
@@ -52,7 +63,7 @@ export interface ResultTarget extends ResultOptions {
 	 * _resultInstance
 	 * @description инстанс результатов
 	 */
-	_resultInstance: Graphics;
+	_resultInstance: PIXI.Graphics;
 	/**
 	 * _resultAnimation
 	 * @description анимация результатов
@@ -104,6 +115,17 @@ export const resultTarget: Partial<Machine> = {
 				 * Удаляем слушателей
 				 */
 				this.off("start", this._onStart, this);
+				this.off("stop", this._onStop, this);
+
+				/** 
+				 * Удаляем все лишнее 
+				 */
+				if (this._resultInstance && this._resultAnimation) {
+					this._resultAnimation.kill();
+					this._resultInstance.clear();
+					this._resultInstance.removeFromParent();
+					this._resultInstance.destroy();
+				}
 			}
 		}
 	},
@@ -142,7 +164,7 @@ export const resultTarget: Partial<Machine> = {
 		/** 
 		 * Создаем инстанс
 		 */
-		this._resultInstance = new Graphics();
+		this._resultInstance = new PIXI.Graphics();
 
 		/** 
 		 * Проставляем параметры 

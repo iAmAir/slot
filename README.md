@@ -16,13 +16,13 @@
 
 ## Usage
 
-```js
+```bash
 	npm install
 	npm run dev
 ```
 
 ## Tests
 
-```js 
+```bash
 	npm run test
 ```
